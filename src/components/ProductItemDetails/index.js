@@ -5,6 +5,7 @@ import Loader from 'react-loader-spinner'
 import {BsPlusSquare, BsDashSquare} from 'react-icons/bs'
 
 import CartContext from '../../context/CartContext'
+
 import Header from '../Header'
 import SimilarProductItem from '../SimilarProductItem'
 
@@ -43,55 +44,38 @@ class ProductItemDetails extends Component {
 
   getProductData = async () => {
     const {match} = this.props
-    const {id} = match.params
+    const {params} = match
+    const {id} = params
 
-    this.setState({apiStatus: apiStatusConstants.inProgress})
-
+    this.setState({
+      apiStatus: apiStatusConstants.inProgress,
+    })
     const jwtToken = Cookies.get('jwt_token')
-
     const apiUrl = `https://apis.ccbp.in/products/${id}`
-
     const options = {
       headers: {
         Authorization: `Bearer ${jwtToken}`,
       },
       method: 'GET',
     }
-
     const response = await fetch(apiUrl, options)
-
-    if (response.ok === true) {
+    if (response.ok) {
       const fetchedData = await response.json()
-
-      const updatedProductData = this.getFormattedData(fetchedData)
-
-      const updatedSimilarProducts = fetchedData.similar_products.map(each =>
-        this.getFormattedData(each),
+      const updatedData = this.getFormattedData(fetchedData)
+      const updatedSimilarProductsData = fetchedData.similar_products.map(
+        eachSimilarProduct => this.getFormattedData(eachSimilarProduct),
       )
-
       this.setState({
-        productData: updatedProductData,
-        similarProductsData: updatedSimilarProducts,
+        productData: updatedData,
+        similarProductsData: updatedSimilarProductsData,
         apiStatus: apiStatusConstants.success,
       })
-    } else {
+    }
+    if (response.status === 404) {
       this.setState({
         apiStatus: apiStatusConstants.failure,
       })
     }
-  }
-
-  onIncrementQuantity = () => {
-    this.setState(prevState => ({quantity: prevState.quantity + 1}))
-  }
-
-  onDecrementQuantity = () => {
-    this.setState(prevState => {
-      if (prevState.quantity > 1) {
-        return {quantity: prevState.quantity - 1}
-      }
-      return {quantity: 1}
-    })
   }
 
   renderLoadingView = () => (
@@ -103,12 +87,11 @@ class ProductItemDetails extends Component {
   renderFailureView = () => (
     <div className="product-details-error-view-container">
       <img
-        src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-error-view-img.png"
         alt="error view"
+        src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-error-view-img.png"
         className="error-view-image"
       />
       <h1 className="product-not-found-heading">Product Not Found</h1>
-
       <Link to="/products">
         <button type="button" className="button">
           Continue Shopping
@@ -117,12 +100,21 @@ class ProductItemDetails extends Component {
     </div>
   )
 
+  onDecrementQuantity = () => {
+    const {quantity} = this.state
+    if (quantity > 1) {
+      this.setState(prevState => ({quantity: prevState.quantity - 1}))
+    }
+  }
+
+  onIncrementQuantity = () => {
+    this.setState(prevState => ({quantity: prevState.quantity + 1}))
+  }
+
   renderProductDetailsView = () => (
     <CartContext.Consumer>
       {value => {
-        const {addCartItem} = value
         const {productData, quantity, similarProductsData} = this.state
-
         const {
           availability,
           brand,
@@ -133,7 +125,7 @@ class ProductItemDetails extends Component {
           title,
           totalReviews,
         } = productData
-
+        const {addCartItem} = value
         const onClickAddToCart = () => {
           addCartItem({...productData, quantity})
         }
@@ -142,12 +134,9 @@ class ProductItemDetails extends Component {
           <div className="product-details-success-view">
             <div className="product-details-container">
               <img src={imageUrl} alt="product" className="product-image" />
-
               <div className="product">
                 <h1 className="product-name">{title}</h1>
-
                 <p className="price-details">Rs {price}/-</p>
-
                 <div className="rating-and-reviews-count">
                   <div className="rating-container">
                     <p className="rating">{rating}</p>
@@ -157,46 +146,39 @@ class ProductItemDetails extends Component {
                       className="star"
                     />
                   </div>
-
                   <p className="reviews-count">{totalReviews} Reviews</p>
                 </div>
-
                 <p className="product-description">{description}</p>
-
                 <div className="label-value-container">
                   <p className="label">Available:</p>
                   <p className="value">{availability}</p>
                 </div>
-
                 <div className="label-value-container">
                   <p className="label">Brand:</p>
                   <p className="value">{brand}</p>
                 </div>
-
                 <hr className="horizontal-line" />
-
                 <div className="quantity-container">
                   <button
                     type="button"
                     className="quantity-controller-button"
-                    data-testid="minus"
+                    aria-label="Mute volume"
                     onClick={this.onDecrementQuantity}
+                    data-testid="minus"
                   >
                     <BsDashSquare className="quantity-controller-icon" />
                   </button>
-
                   <p className="quantity">{quantity}</p>
-
                   <button
                     type="button"
                     className="quantity-controller-button"
-                    data-testid="plus"
+                    aria-label="Mute volume"
                     onClick={this.onIncrementQuantity}
+                    data-testid="plus"
                   >
                     <BsPlusSquare className="quantity-controller-icon" />
                   </button>
                 </div>
-
                 <button
                   type="button"
                   className="button add-to-cart-btn"
@@ -206,14 +188,12 @@ class ProductItemDetails extends Component {
                 </button>
               </div>
             </div>
-
             <h1 className="similar-products-heading">Similar Products</h1>
-
             <ul className="similar-products-list">
-              {similarProductsData.map(eachProduct => (
+              {similarProductsData.map(eachSimilarProduct => (
                 <SimilarProductItem
-                  key={eachProduct.id}
-                  productDetails={eachProduct}
+                  productDetails={eachSimilarProduct}
+                  key={eachSimilarProduct.id}
                 />
               ))}
             </ul>
@@ -229,13 +209,10 @@ class ProductItemDetails extends Component {
     switch (apiStatus) {
       case apiStatusConstants.success:
         return this.renderProductDetailsView()
-
       case apiStatusConstants.failure:
         return this.renderFailureView()
-
       case apiStatusConstants.inProgress:
         return this.renderLoadingView()
-
       default:
         return null
     }

@@ -1,5 +1,6 @@
 import Header from '../Header'
 import CartListView from '../CartListView'
+
 import CartContext from '../../context/CartContext'
 import EmptyCartView from '../EmptyCartView'
 import CartSummary from '../CartSummary'
@@ -10,12 +11,7 @@ const Cart = () => (
   <CartContext.Consumer>
     {value => {
       const {cartList, removeAllCartItems} = value
-
       const showEmptyView = cartList.length === 0
-
-      const onClickRemoveAll = () => {
-        removeAllCartItems()
-      }
 
       return (
         <>
@@ -25,16 +21,16 @@ const Cart = () => (
               <EmptyCartView />
             ) : (
               <div className="cart-content-container">
-                <h1 className="cart-heading">My Cart</h1>
-
-                <button
-                  type="button"
-                  className="remove-all-btn"
-                  onClick={onClickRemoveAll}
-                >
-                  Remove All
-                </button>
-
+                <div className="cart-header">
+                  <h1 className="cart-heading">My Cart</h1>
+                  <button
+                    type="button"
+                    className="remove-all-btn"
+                    onClick={removeAllCartItems}
+                  >
+                    Remove All
+                  </button>
+                </div>
                 <CartListView />
                 <CartSummary />
               </div>
@@ -45,5 +41,4 @@ const Cart = () => (
     }}
   </CartContext.Consumer>
 )
-
 export default Cart

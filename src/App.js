@@ -18,28 +18,30 @@ class App extends Component {
   }
 
   addCartItem = product => {
-    const {cartList} = this.state
-    const productObject = cartList.find(each => each.id === product.id)
+    this.setState(prevState => {
+      const isProductAlreadyExists = prevState.cartList.find(
+        ele => ele.id === product.id,
+      )
 
-    if (productObject) {
-      this.setState(prevState => ({
-        cartList: prevState.cartList.map(each => {
-          if (each.id === product.id) {
-            return {...each, quantity: each.quantity + product.quantity}
-          }
-          return each
-        }),
-      }))
-    } else {
-      this.setState(prevState => ({
+      if (isProductAlreadyExists) {
+        return {
+          cartList: prevState.cartList.map(item =>
+            item.id === product.id
+              ? {...item, quantity: item.quantity + product.quantity}
+              : item,
+          ),
+        }
+      }
+
+      return {
         cartList: [...prevState.cartList, product],
-      }))
-    }
+      }
+    })
   }
 
-  removeCartItem = id => {
+  removeCartItem = productId => {
     this.setState(prevState => ({
-      cartList: prevState.cartList.filter(each => each.id !== id),
+      cartList: prevState.cartList.filter(item => item.id !== productId),
     }))
   }
 
@@ -47,33 +49,22 @@ class App extends Component {
     this.setState({cartList: []})
   }
 
-  incrementCartItemQuantity = id => {
+  incrementCartItemQuantity = productId => {
     this.setState(prevState => ({
-      cartList: prevState.cartList.map(each => {
-        if (each.id === id) {
-          return {...each, quantity: each.quantity + 1}
-        }
-        return each
-      }),
+      cartList: prevState.cartList.map(item =>
+        item.id === productId ? {...item, quantity: item.quantity + 1} : item,
+      ),
     }))
   }
 
-  decrementCartItemQuantity = id => {
-    const {cartList} = this.state
-    const product = cartList.find(each => each.id === id)
-
-    if (product.quantity > 1) {
-      this.setState(prevState => ({
-        cartList: prevState.cartList.map(each => {
-          if (each.id === id) {
-            return {...each, quantity: each.quantity - 1}
-          }
-          return each
-        }),
-      }))
-    } else {
-      this.removeCartItem(id)
-    }
+  decrementCartItemQuantity = productId => {
+    this.setState(prevState => ({
+      cartList: prevState.cartList
+        .map(item =>
+          item.id === productId ? {...item, quantity: item.quantity - 1} : item,
+        )
+        .filter(item => item.quantity >= 1),
+    }))
   }
 
   render() {
@@ -101,7 +92,7 @@ class App extends Component {
           />
           <ProtectedRoute exact path="/cart" component={Cart} />
           <Route path="/not-found" component={NotFound} />
-          <Redirect to="/not-found" />
+          <Redirect to="not-found" />
         </Switch>
       </CartContext.Provider>
     )
